@@ -12,9 +12,10 @@
 - Step 2: Get the Project Assets 00:07:51
 - Step 3: Install a LAMP web server on CLoud9 IDE 00:08:49
 - Step 4: Create a MySQL RDS database instance 00:13:15
-- Step 5: Create an Application Load Balancer 00:20:53
-- Step 6: Importing the data into the RDS database 00:25:18
-- Step 7: Configure the system parameters in Parameter Store Systems Manager 00:38:20
+- Step 5： Modify Launch Template
+- Step 6: Create an Application Load Balancer 00:20:53
+- Step 7: Importing the data into the RDS database 00:25:18
+- Step 8: Configure the system parameters in Parameter Store Systems Manager 00:38:20
 
 # Step 0:  Inspect the archtecture 
 - Inspect the example VPC. 
@@ -75,11 +76,32 @@ with the following specifications.
 - [ ]  Initialdatabasename: exampledb
 - [ ]  Enhancedmonitoring: Disabled
 
-# Step 5: Create an Application Load Balancer
+# Step 5： Modify Launch Template
+```sh
+#!/bin/bash -ex
+sudo yum -y update
+amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+sudo yum install -y httpd mariadb-server
+sudo chkconfig httpd on
+sudo service httpd start
+cd /home/ec2-user
+sudo wget https://aws-tc-largeobjects.s3-us-west-2.amazonaws.com/ILT-TF-200-ACACAD-20-EN/capstone-project/Countrydatadump.sql
+sudo chown ec2-user:ec2-user Countrydatadump.sql
+cd /var/www/html
+sudo wget https://aws-tc-largeobjects.s3-us-west-2.amazonaws.com/ILT-TF-200-ACACAD-20-EN/capstone-project/Example.zip
+sudo unzip Example.zip -d /var/www/html/
+sudo chmod 755 Example
+sudo sed -i "2i date.timezone = \"America/New_York\" " /etc/php.ini
+sudo service httpd restart
+cd /var/www/html/Example
+sudo mv * ../
+```
+
+# Step 6: Create an Application Load Balancer
 - Create target group 
 - Create an auto scaling group 
 - Lunch Web Instances in the private subnet
-# Step 6: Importing the data into the RDS database
+# Step 7: Importing the data into the RDS database
  _Importing the data into the RDS database instance from CLoud9 or by accessing the web instance via bastion host
  1. get the SQLDump file:
  
@@ -108,7 +130,7 @@ show tables;
 select * from countrydata_final; 
  ```
 
-# Step 7: Configure the system parameters in Parameter Store Systems Manager
+# Step 8: Configure the system parameters in Parameter Store Systems Manager
 
 Add the following parameters to the Parameter Store and set the correct values:
 1. /example/endpoint 
